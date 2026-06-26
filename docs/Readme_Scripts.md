@@ -13,11 +13,18 @@ API: http://localhost:3000
 
 Prisma Studio: http://localhost:5555
 
+_________________________________________________________
 
 Scripts úteis
+
 •	npm install
+
 •	npm run start:dev
+
 •	npm test
+
 •	npm run test:cov
+
 •	npx prisma generate
+
 •	npx prisma migrate dev
