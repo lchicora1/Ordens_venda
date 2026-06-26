@@ -1,17 +1,4 @@
 services:
-  api:
-    build: .
-    container_name: ovgs-api
-    restart: always
-    ports:
-      - "3000:3000"
-    env_file:
-      - .env
-    depends_on:
-      - postgres
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ovgs
-
   postgres:
     image: postgres:16
     container_name: ovgs-postgres
@@ -29,6 +16,45 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  migrate:
+    build: .
+    container_name: ovgs-migrate
+    command: npx prisma migrate deploy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ovgs
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build: .
+    container_name: ovgs-api
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ovgs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  studio:
+    image: node:20
+    container_name: ovgs-prisma-studio
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: npx prisma studio --hostname 0.0.0.0 --port 5555
+    ports:
+      - "5555:5555"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ovgs
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:
