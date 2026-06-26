@@ -2,8 +2,11 @@ Documentação da API
 Endpoints
 
 POST	/customers	-  Criar cliente
+
 GET	/customers - 	Listar clientes
+
 POST	/transports - 	Criar transportadora
+
 GET	/transports - 	Listar transportadoras
 POST	/items  - 	Criar produto
 GET	/items - 	Listar produtos
