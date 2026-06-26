@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  CRIADA
+  PLANEJADA
+  AGENDADA
+  EM_TRANSPORTE
+  ENTREGUE
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  STATUS_CHANGE
+  TRANSPORT_CHANGE
+  SCHEDULE_CHANGE
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  name      String
+  document  String   @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders     SalesOrder[]
+  transports CustomerTransport[]
+}
+
+model TransportType {
+  id          String   @id @default(uuid())
+  description String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customers CustomerTransport[]
+  orders    SalesOrder[]
+}
+
+model CustomerTransport {
+  customerId  String
+  transportId String
+
+  customer  Customer      @relation(fields: [customerId], references: [id])
+  transport TransportType @relation(fields: [transportId], references: [id])
+
+  @@id([customerId, transportId])
+}
+
+model Item {
+  id          String   @id @default(uuid())
+  sku         String   @unique
+  description String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderItems SalesOrderItem[]
+}
+
+model SalesOrder {
+  id String @id @default(uuid())
+
+  customerId  String
+  transportId String
+
+  status OrderStatus @default(CRIADA)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer  Customer      @relation(fields: [customerId], references: [id])
+  transport TransportType @relation(fields: [transportId], references: [id])
+
+  items       SalesOrderItem[]
+  schedule    Schedule?
+  auditEvents AuditLog[]
+}
+
+model SalesOrderItem {
+  orderId String
+  itemId  String
+
+  quantity Int
+
+  order SalesOrder @relation(fields: [orderId], references: [id])
+  item  Item       @relation(fields: [itemId], references: [id])
+
+  @@id([orderId, itemId])
+}
+
+model Schedule {
+  id String @id @default(uuid())
+
+  orderId String @unique
+
+  deliveryDate DateTime
+
+  windowStart String
+  windowEnd   String
+
+  confirmed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order SalesOrder @relation(fields: [orderId], references: [id])
+}
+
+model AuditLog {
+  id String @id @default(uuid())
+
+  orderId String?
+
+  action AuditAction
+
+  entityName String
+
+  oldValue String?
+  newValue String?
+
+  createdAt DateTime @default(now())
+
+  order SalesOrder? @relation(fields: [orderId], references: [id])
+}
